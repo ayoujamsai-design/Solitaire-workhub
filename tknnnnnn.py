@@ -21,7 +21,7 @@ for i in range(7): #  7 กอง
     for j in range(7): #แจก 7 ใบ
         card = deck.pop()  #แจกไพ่ให้กองละ 7 ใบ โดยเอาไพ่จาก deck ออกไป
         
-        if i < 3 and j < 3:  #ไพ่กองที่ 1-3 ใบที่ 1-3 หงายหน้า
+        if i < 3 and j < 3:  #ไพ่กองที่ 1-3 ใบที่ 1-3 คว่ำหน้า
             card[2] = False  # False แสดงว่าไพ่คว่ำหน้า card = [rank, suit, True] ตน.2
         else:
             card[2] = True  # True แสดงว่าไพ่หงายหน้า
@@ -53,21 +53,24 @@ def show_piles(pile_number):
         
 #show_piles(1) #test แสดงกองไพ่กองที่ 1
 
-def cout_face_up_cards(pile_number):    
-    pile = piles[pile_number - 1]  #เลือกกองไพ่ที่ต้องการนับไพ่หงายหน้า
-    
-    count = 0
-    
-    while count < len(pile):
-        card = pile[count]
-        
-        if card[2] == True:  #ถ้าไพ่หงายหน้า
-            print(card[0], card[1])  #แสดง rank และ suit ของไพ่
+def count_face_up_cards(pile_number):
+    pile = piles[pile_number - 1]
+
+    count = 0  # จำนวนไพ่หงาย
+    i = 0      # ตำแหน่งไพ่ที่กำลังตรวจ
+
+    while i < len(pile):
+        card = pile[i]
+
+        if card[2] == True:
             count += 1
-        
-        i += 1 
-        
+
+        i += 1  # ไปตรวจใบถัดไป ทั้งไพ่หงายและไพ่คว่ำ
+
     return count
+
+
+print("จำนวนไพ่หงาย:", count_face_up_cards(1))
 
 
 
