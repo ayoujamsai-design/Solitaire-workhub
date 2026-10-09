@@ -80,6 +80,28 @@ def count_face_up_cards(pile_number):
 
 print("จำนวนไพ่หงาย:", count_face_up_cards(1))
 
+def can_place(card, destination):
+    # กองว่างวางได้เฉพาะ K
+    if len(destination) == 0:
+        return card[0] == "K"
+
+    # ไพ่ใบสุดท้ายของกองปลายทาง
+    top_card = destination[-1]
+
+    # ไพ่ปลายทางต้องหงายหน้า
+    if top_card[2] == False:
+        return False
+
+    # ต้องเป็นดอกเดียวกัน
+    if card[1] != top_card[1]:
+        return False
+
+    # ไพ่ที่ย้ายต้องมีแต้มน้อยกว่าปลายทาง 1
+    card_value = ranks.index(card[0])
+    top_value = ranks.index(top_card[0])
+
+    return card_value + 1 == top_value
+
 running = True
 
 while running:
@@ -113,7 +135,7 @@ while running:
             card = pile[j]
 
             x = 40 + i * 135  #ตำแหน่งแนวนอนของแต่ละกอง
-            y = 180 + j * 45      #วางไพ่ซ้อนกันลงมา
+            y = 180 + j * 45  #วางไพ่ซ้อนกันลงมา
             rect = pygame.Rect(x, y, 100, 140)
 
             if card[2] == True:
@@ -151,6 +173,8 @@ while running:
     clock.tick(60)         #จำกัดไว้ที่ 60 เฟรมต่อวินาที
 
 pygame.quit()
+
+
 
 
 
