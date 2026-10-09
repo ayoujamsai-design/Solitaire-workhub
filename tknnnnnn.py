@@ -185,6 +185,13 @@ while running:
             #เส้นขอบไพ่
             pygame.draw.rect(screen, (0, 0, 0), rect, 2)
 
+            # เน้นใบที่เลือกและทุกใบที่อยู่ใต้ลงมา
+            if selected_pile == i:
+                if j >= selected_index:
+                    pygame.draw.rect(
+                        screen, (255, 220, 0), rect, 3
+                    )
+
     #แสดงจำนวนไพ่สำรอง
     text = font.render(
         "Extra cards: " + str(len(extra_cards)),
@@ -197,11 +204,6 @@ while running:
     clock.tick(60)         #จำกัดไว้ที่ 60 เฟรมต่อวินาที
 
 pygame.quit()
-
-print(can_place(["7", "S", True], [["8", "S", True]]))  # True
-print(can_place(["7", "H", True], [["8", "S", True]]))  # False
-print(can_place(["K", "S", True], []))                 # True
-print(can_place(["7", "S", True], []))                 # False
 
 
 
