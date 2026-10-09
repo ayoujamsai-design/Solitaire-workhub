@@ -104,18 +104,23 @@ def can_place(card, destination):
 selected_pile = None   # กองที่เลือก
 selected_index = None  # ตำแหน่งไพ่ที่เลือก
 
+dragging = False
+offset_x = 0
+offset_y = 0
+
 running = True
 
 while running:
-        # รับเหตุการณ์
+    # รับเหตุการณ์
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # เมาส์ซ้าย
+            if event.button == 1:
                 selected_pile = None
                 selected_index = None
+                dragging = False
 
                 mouse_x, mouse_y = event.pos
 
@@ -127,8 +132,6 @@ while running:
                     for j in range(len(pile) - 1, -1, -1):
                         y = 180 + j * 45
 
-                        # ใบสุดท้ายเห็นเต็มใบ
-                        # ใบอื่นเห็นเฉพาะส่วนบน 45 พิกเซล
                         if j == len(pile) - 1:
                             height = 140
                         else:
@@ -140,30 +143,58 @@ while running:
                             if pile[j][2] == True:
                                 selected_pile = i
                                 selected_index = j
+                                dragging = True
 
-                                print(
-                                    "เลือกไพ่:",
-                                    pile[selected_index:]
-                                )
+                                offset_x = mouse_x - x
+                                offset_y = mouse_y - y
 
                             break
 
                     if selected_pile is not None:
                         break
 
+        # ต้องอยู่ระดับเดียวกับ MOUSEBUTTONDOWN
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                dragging = False
+                selected_pile = None
+                selected_index = None
+
+    # ล้างภาพเก่าทุกเฟรม
+    screen.fill((30, 100, 60))
+
+    # ช่องเก็บไพ่ครบชุด 4 ช่อง
+    for i in range(4):
+        x = 530 + i * 110
+        slot = pygame.Rect(x, 15, 100, 140)
+
+        pygame.draw.rect(
+            screen, (20, 75, 45), slot, border_radius=8
+        )
+        pygame.draw.rect(
+            screen, (200, 200, 200), slot, 2, border_radius=8
+        )
+
+        text = font.render("K - A", True, (200, 200, 200))
+        screen.blit(text, (x + 20, 70))
+
     # วาดไพ่ทั้ง 7 กอง
     for i in range(7):
         pile = piles[i]
 
         for j in range(len(pile)):
+            # ไม่วาดกลุ่มที่กำลังลากไว้ที่เดิม
+            if dragging and selected_pile == i:
+                if j >= selected_index:
+                    continue
+
             card = pile[j]
 
-            x = 40 + i * 135  #ตำแหน่งแนวนอนของแต่ละกอง
-            y = 180 + j * 45  #วางไพ่ซ้อนกันลงมา
+            x = 40 + i * 135
+            y = 180 + j * 45
             rect = pygame.Rect(x, y, 100, 140)
 
             if card[2] == True:
-                #ไพ่หงาย
                 pygame.draw.rect(screen, (255, 255, 255), rect)
 
                 if card[1] == "H" or card[1] == "D":
@@ -179,20 +210,11 @@ while running:
                 screen.blit(text, (x + 8, y + 8))
 
             else:
-                #ไพ่คว่ำ
                 pygame.draw.rect(screen, (50, 70, 160), rect)
 
-            #เส้นขอบไพ่
             pygame.draw.rect(screen, (0, 0, 0), rect, 2)
 
-            # เน้นใบที่เลือกและทุกใบที่อยู่ใต้ลงมา
-            if selected_pile == i:
-                if j >= selected_index:
-                    pygame.draw.rect(
-                        screen, (255, 220, 0), rect, 3
-                    )
-
-    #แสดงจำนวนไพ่สำรอง
+    # แสดงจำนวนไพ่สำรอง
     text = font.render(
         "Extra cards: " + str(len(extra_cards)),
         True,
@@ -200,8 +222,36 @@ while running:
     )
     screen.blit(text, (40, 30))
 
-    pygame.display.flip()  #อัปเดตภาพบนหน้าจอ
-    clock.tick(60)         #จำกัดไว้ที่ 60 เฟรมต่อวินาที
+    # วาดกลุ่มไพ่ตามเมาส์เป็นลำดับสุดท้าย
+    if dragging:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        moving_cards = piles[selected_pile][selected_index:]
+
+        for j in range(len(moving_cards)):
+            card = moving_cards[j]
+
+            x = mouse_x - offset_x
+            y = mouse_y - offset_y + j * 45
+            rect = pygame.Rect(x, y, 100, 140)
+
+            pygame.draw.rect(screen, (255, 255, 255), rect)
+
+            if card[1] == "H" or card[1] == "D":
+                text_color = (200, 0, 0)
+            else:
+                text_color = (0, 0, 0)
+
+            text = font.render(
+                card[0] + " " + card[1],
+                True,
+                text_color
+            )
+            screen.blit(text, (x + 8, y + 8))
+
+            pygame.draw.rect(screen, (255, 220, 0), rect, 3)
+
+    pygame.display.flip()
+    clock.tick(60)
 
 pygame.quit()
 
