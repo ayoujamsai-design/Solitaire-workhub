@@ -111,7 +111,7 @@ offset_y = 0
 running = True
 
 while running:
-    # รับเหตุการณ์
+        # รับเหตุการณ์
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -128,7 +128,6 @@ while running:
                     pile = piles[i]
                     x = 40 + i * 135
 
-                    # ตรวจจากใบล่างสุดขึ้นมา
                     for j in range(len(pile) - 1, -1, -1):
                         y = 180 + j * 45
 
@@ -153,9 +152,34 @@ while running:
                     if selected_pile is not None:
                         break
 
-        # ต้องอยู่ระดับเดียวกับ MOUSEBUTTONDOWN
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1:
+            if event.button == 1 and dragging:
+                mouse_x, mouse_y = event.pos
+                moving_cards = piles[selected_pile][selected_index:]
+
+                for i in range(7):
+                    x = 40 + i * 135
+
+                    drop_rect = pygame.Rect(
+                        x, 180, 100,
+                        screen.get_height() - 180
+                    )
+
+                    if drop_rect.collidepoint(mouse_x, mouse_y):
+                        if i != selected_pile:
+                            if can_place(moving_cards[0], piles[i]):
+                                # เพิ่มไพ่ลงกองปลายทาง
+                                piles[i].extend(moving_cards)
+
+                                # ลบไพ่ออกจากกองต้นทาง
+                                del piles[selected_pile][selected_index:]
+
+                                # พลิกไพ่ที่เปิดเผย
+                                if piles[selected_pile]:
+                                    piles[selected_pile][-1][2] = True
+
+                        break
+
                 dragging = False
                 selected_pile = None
                 selected_index = None
