@@ -36,7 +36,38 @@ for i in range(7): #แสดงกองไพ่ 7 กอง
     
 print("Extra cards:",extra_cards)  #แสดงไพ่ที่เหลือจากการแจกไพ่ 7 กอง
 
+def show_piles(pile_number):
+    pile = piles[pile_number - 1]  #เลือกกองไพ่ที่ต้องการแสดง
+    
+    i  = 0
+    
+    while i < len(pile):
+        card = pile[i]
+        
+        if card[2] == True:  #ถ้าไพ่หงายหน้า
+            print(card[0], card[1])  #แสดง rank และ suit ของไพ่
+        else:
+            print("X")  #แสดง X แทนไพ่คว่ำหน้า
+            
+        i += 1
+        
+#show_piles(1) #test แสดงกองไพ่กองที่ 1
 
+def cout_face_up_cards(pile_number):    
+    pile = piles[pile_number - 1]  #เลือกกองไพ่ที่ต้องการนับไพ่หงายหน้า
+    
+    count = 0
+    
+    while count < len(pile):
+        card = pile[count]
+        
+        if card[2] == True:  #ถ้าไพ่หงายหน้า
+            print(card[0], card[1])  #แสดง rank และ suit ของไพ่
+            count += 1
+        
+        i += 1 
+        
+    return count
 
 
 
