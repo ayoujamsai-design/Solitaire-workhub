@@ -30,7 +30,7 @@ for i in range(7): #  7 กอง
     for j in range(7): #แจก 7 ใบ
         card = deck.pop()  #แจกไพ่ให้กองละ 7 ใบ โดยเอาไพ่จาก deck ออกไป
         
-        if i < 3 and j < 3:  #ไพ่กองที่ 1-3 ใบที่ 1-3 คว่ำหน้า
+        if i < 7 and j < 3:  #ไพ่กองที่ 1-3 ใบที่ 1-3 คว่ำหน้า
             card[2] = False  # False แสดงว่าไพ่คว่ำหน้า card = [rank, suit, True] ตน.2
         else:
             card[2] = True  # True แสดงว่าไพ่หงายหน้า
@@ -90,6 +90,21 @@ while running:
 
     screen.fill((30, 100, 60))  #พื้นหลังโต๊ะสีเขียว
 
+    # ช่องเก็บไพ่ครบชุด 4 ช่อง ขวาบน
+    for i in range(4):
+        x = 530 + i * 110
+        slot = pygame.Rect(x, 15, 100, 140)
+
+        pygame.draw.rect(
+            screen, (20, 75, 45), slot, border_radius=8
+        )
+        pygame.draw.rect(
+            screen, (200, 200, 200), slot, 2, border_radius=8
+        )
+
+        text = font.render("K - A", True, (200, 200, 200))
+        screen.blit(text, (x + 20, 70))
+
     # วาดไพ่ทั้ง 7 กอง
     for i in range(7):
         pile = piles[i]
@@ -98,7 +113,7 @@ while running:
             card = pile[j]
 
             x = 40 + i * 135  #ตำแหน่งแนวนอนของแต่ละกอง
-            y = 100 + j * 45  #วางไพ่ซ้อนกันลงมา
+            y = 180 + j * 45      #วางไพ่ซ้อนกันลงมา
             rect = pygame.Rect(x, y, 100, 140)
 
             if card[2] == True:
