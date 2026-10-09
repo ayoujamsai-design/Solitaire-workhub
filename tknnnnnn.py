@@ -1,4 +1,13 @@
+import pygame #นำเข้าpygame
 import random  #แจกไพ่แบบสุ่ม
+
+pygame.init()
+
+screen = pygame.display.set_mode((1000, 650))
+pygame.display.set_caption("Solitaire")
+
+font = pygame.font.Font(None, 30)
+clock = pygame.time.Clock()
 
 suits = ["S", "H", "D", "C"]
 ranks = ["A", "2", "3", "4", "5", "6", "7",
@@ -56,8 +65,8 @@ def show_piles(pile_number):
 def count_face_up_cards(pile_number):
     pile = piles[pile_number - 1]
 
-    count = 0  # จำนวนไพ่หงาย
-    i = 0      # ตำแหน่งไพ่ที่กำลังตรวจ
+    count = 0  #จำนวนไพ่หงาย
+    i = 0      #ตำแหน่งไพ่ที่กำลังตรวจ
 
     while i < len(pile):
         card = pile[i]
@@ -65,12 +74,68 @@ def count_face_up_cards(pile_number):
         if card[2] == True:
             count += 1
 
-        i += 1  # ไปตรวจใบถัดไป ทั้งไพ่หงายและไพ่คว่ำ
+        i += 1  #ไปตรวจใบถัดไป ทั้งไพ่หงายและไพ่คว่ำ
 
     return count
 
-
 print("จำนวนไพ่หงาย:", count_face_up_cards(1))
+
+running = True
+
+while running:
+    #รับเหตุการณ์
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((30, 100, 60))  #พื้นหลังโต๊ะสีเขียว
+
+    # วาดไพ่ทั้ง 7 กอง
+    for i in range(7):
+        pile = piles[i]
+
+        for j in range(len(pile)):
+            card = pile[j]
+
+            x = 40 + i * 135  #ตำแหน่งแนวนอนของแต่ละกอง
+            y = 100 + j * 45  #วางไพ่ซ้อนกันลงมา
+            rect = pygame.Rect(x, y, 100, 140)
+
+            if card[2] == True:
+                #ไพ่หงาย
+                pygame.draw.rect(screen, (255, 255, 255), rect)
+
+                if card[1] == "H" or card[1] == "D":
+                    text_color = (200, 0, 0)
+                else:
+                    text_color = (0, 0, 0)
+
+                text = font.render(
+                    card[0] + " " + card[1],
+                    True,
+                    text_color
+                )
+                screen.blit(text, (x + 8, y + 8))
+
+            else:
+                #ไพ่คว่ำ
+                pygame.draw.rect(screen, (50, 70, 160), rect)
+
+            #เส้นขอบไพ่
+            pygame.draw.rect(screen, (0, 0, 0), rect, 2)
+
+    #แสดงจำนวนไพ่สำรอง
+    text = font.render(
+        "Extra cards: " + str(len(extra_cards)),
+        True,
+        (255, 255, 255)
+    )
+    screen.blit(text, (40, 30))
+
+    pygame.display.flip()  #อัปเดตภาพบนหน้าจอ
+    clock.tick(60)         #จำกัดไว้ที่ 60 เฟรมต่อวินาที
+
+pygame.quit()
 
 
 
