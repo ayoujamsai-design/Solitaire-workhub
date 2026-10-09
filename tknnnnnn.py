@@ -3,7 +3,7 @@ import random  #แจกไพ่แบบสุ่ม
 
 pygame.init()
 
-screen = pygame.display.set_mode((1000, 650))
+screen = pygame.display.set_mode((1000, 1000))
 pygame.display.set_caption("Solitaire")
 
 font = pygame.font.Font(None, 30)
