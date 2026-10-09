@@ -30,7 +30,7 @@ for i in range(7): #  7 กอง
     for j in range(7): #แจก 7 ใบ
         card = deck.pop()  #แจกไพ่ให้กองละ 7 ใบ โดยเอาไพ่จาก deck ออกไป
         
-        if i < 7 and j < 3:  #ไพ่กองที่ 1-3 ใบที่ 1-3 คว่ำหน้า
+        if i < 4 and j < 3:  #ไพ่กองที่ 1-4 คว่ำ 3 ใบแรก
             card[2] = False  # False แสดงว่าไพ่คว่ำหน้า card = [rank, suit, True] ตน.2
         else:
             card[2] = True  # True แสดงว่าไพ่หงายหน้า
@@ -238,13 +238,30 @@ while running:
 
             pygame.draw.rect(screen, (0, 0, 0), rect, 2)
 
-    # แสดงจำนวนไพ่สำรอง
+        # กองไพ่สำรองด้านซ้ายบน
+    stock_rect = pygame.Rect(40, 15, 100, 140)
+
+    if len(extra_cards) > 0:
+        # หลังไพ่
+        pygame.draw.rect(
+            screen, (50, 70, 160), stock_rect, border_radius=8
+        )
+    else:
+        # ช่องว่างเมื่อแจกหมด
+        pygame.draw.rect(
+            screen, (20, 75, 45), stock_rect, border_radius=8
+        )
+
+    pygame.draw.rect(
+        screen, (200, 200, 200), stock_rect, 2, border_radius=8
+    )
+
     text = font.render(
-        "Extra cards: " + str(len(extra_cards)),
+        "Stock: " + str(len(extra_cards)),
         True,
         (255, 255, 255)
     )
-    screen.blit(text, (40, 30))
+    screen.blit(text, (155, 70))
 
     # วาดกลุ่มไพ่ตามเมาส์เป็นลำดับสุดท้าย
     if dragging:
