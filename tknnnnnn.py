@@ -124,6 +124,20 @@ while running:
 
                 mouse_x, mouse_y = event.pos
 
+                # คลิกกองไพ่สำรองซ้ายบน
+                stock_rect = pygame.Rect(40, 15, 100, 140)
+
+                if stock_rect.collidepoint(mouse_x, mouse_y):
+                    if len(extra_cards) > 0:
+                        for i in range(3):
+                            if len(extra_cards) > 0:
+                                card = extra_cards.pop()
+                                card[2] = True
+                                piles[i].append(card)
+
+                    # จบเหตุการณ์นี้ ไม่ตรวจเลือกไพ่ต่อ
+                    continue
+
                 for i in range(7):
                     pile = piles[i]
                     x = 40 + i * 135
