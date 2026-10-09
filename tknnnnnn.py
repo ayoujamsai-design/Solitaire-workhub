@@ -85,7 +85,6 @@ def can_place(card, destination):
     if len(destination) == 0:
         return card[0] == "K"
 
-    # ไพ่ใบสุดท้ายของกองปลายทาง
     top_card = destination[-1]
 
     # ไพ่ปลายทางต้องหงายหน้า
@@ -96,36 +95,61 @@ def can_place(card, destination):
     if card[1] != top_card[1]:
         return False
 
-    # ไพ่ที่ย้ายต้องมีแต้มน้อยกว่าปลายทาง 1
+    # ไพ่ที่ย้ายต้องน้อยกว่าปลายทาง 1 แต้ม
     card_value = ranks.index(card[0])
     top_value = ranks.index(top_card[0])
 
     return card_value + 1 == top_value
 
+selected_pile = None   # กองที่เลือก
+selected_index = None  # ตำแหน่งไพ่ที่เลือก
+
 running = True
 
 while running:
-    #รับเหตุการณ์
+        # รับเหตุการณ์
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill((30, 100, 60))  #พื้นหลังโต๊ะสีเขียว
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # เมาส์ซ้าย
+                selected_pile = None
+                selected_index = None
 
-    # ช่องเก็บไพ่ครบชุด 4 ช่อง ขวาบน
-    for i in range(4):
-        x = 530 + i * 110
-        slot = pygame.Rect(x, 15, 100, 140)
+                mouse_x, mouse_y = event.pos
 
-        pygame.draw.rect(
-            screen, (20, 75, 45), slot, border_radius=8
-        )
-        pygame.draw.rect(
-            screen, (200, 200, 200), slot, 2, border_radius=8
-        )
+                for i in range(7):
+                    pile = piles[i]
+                    x = 40 + i * 135
 
-        text = font.render("K - A", True, (200, 200, 200))
-        screen.blit(text, (x + 20, 70))
+                    # ตรวจจากใบล่างสุดขึ้นมา
+                    for j in range(len(pile) - 1, -1, -1):
+                        y = 180 + j * 45
+
+                        # ใบสุดท้ายเห็นเต็มใบ
+                        # ใบอื่นเห็นเฉพาะส่วนบน 45 พิกเซล
+                        if j == len(pile) - 1:
+                            height = 140
+                        else:
+                            height = 45
+
+                        card_rect = pygame.Rect(x, y, 100, height)
+
+                        if card_rect.collidepoint(mouse_x, mouse_y):
+                            if pile[j][2] == True:
+                                selected_pile = i
+                                selected_index = j
+
+                                print(
+                                    "เลือกไพ่:",
+                                    pile[selected_index:]
+                                )
+
+                            break
+
+                    if selected_pile is not None:
+                        break
 
     # วาดไพ่ทั้ง 7 กอง
     for i in range(7):
@@ -173,6 +197,11 @@ while running:
     clock.tick(60)         #จำกัดไว้ที่ 60 เฟรมต่อวินาที
 
 pygame.quit()
+
+print(can_place(["7", "S", True], [["8", "S", True]]))  # True
+print(can_place(["7", "H", True], [["8", "S", True]]))  # False
+print(can_place(["K", "S", True], []))                 # True
+print(can_place(["7", "S", True], []))                 # False
 
 
 
