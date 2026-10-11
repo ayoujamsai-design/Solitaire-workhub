@@ -101,6 +101,86 @@ def can_place(card, destination):
 
     return card_value + 1 == top_value
 
+def check_complete(pile_number):
+    pile = piles[pile_number - 1]
+
+    # 1. ถ้ามีไพ่น้อยกว่า 13 ใบ จะยังไม่ครบชุด
+    if len(pile) < 13:
+        return False
+
+    # 2. เลือกไพ่ 13 ใบสุดท้ายของกอง
+    last_cards = pile[-13:]
+
+    # 3. ไพ่ใบแรกของชุดต้องเป็น K
+    if last_cards[0][0] != "K":
+        return False
+
+    # 4. เก็บดอกของไพ่ใบแรกไว้เปรียบเทียบ
+    suit = last_cards[0][1]
+
+    i = 0
+
+    # 5. ตรวจไพ่ทั้ง 13 ใบ
+    while i < 13:
+        card = last_cards[i]
+
+        # ถ้าเจอไพ่คว่ำหน้า ถือว่าไม่ครบชุด
+        if card[2] == False:
+            return False
+
+        # ถ้าเจอไพ่ต่างดอก ถือว่าไม่ครบชุด
+        if card[1] != suit:
+            return False
+
+        # 6. ตรวจว่าแต้มเรียงลดลงทีละ 1
+        if i < 12:
+            next_card = last_cards[i + 1]
+
+            card_value = ranks.index(card[0])
+            next_value = ranks.index(next_card[0])
+
+            if next_value != card_value - 1:
+                return False
+
+        i += 1
+
+    # 7. ผ่านทุกเงื่อนไข แสดงว่าครบชุด
+    return True
+
+completed_sets = []  # เก็บชุดไพ่ K ถึง A ที่เรียงสำเร็จ
+def collect_complete():
+    i = 0
+
+    # ตรวจสอบไพ่ทั้ง 7 กอง
+    while i < 7:
+
+        # ตรวจว่ากองนี้มีไพ่ K ถึง A ครบหรือไม่
+        if check_complete(i + 1):
+
+            # เลือกไพ่ 13 ใบสุดท้าย
+            complete_cards = piles[i][-13:]
+
+            # เก็บชุดไพ่ที่สำเร็จ
+            completed_sets.append(complete_cards)
+
+            # ลบไพ่ 13 ใบออกจากกองเดิม
+            del piles[i][-13:]
+
+            # เปิดไพ่ใบสุดท้ายที่เหลือในกอง
+            if len(piles[i]) > 0:
+                piles[i][-1][2] = True
+
+            print("Completed:", len(completed_sets))
+
+        i += 1
+
+
+
+selected_pile = None
+selected_index = None
+
+dragging = False
+
 selected_pile = None   # กองที่เลือก
 selected_index = None  # ตำแหน่งไพ่ที่เลือก
 
@@ -191,6 +271,16 @@ while running:
                                 # พลิกไพ่ที่เปิดเผย
                                 if piles[selected_pile]:
                                     piles[selected_pile][-1][2] = True
+                                    
+                                piles[i].extend(moving_cards)
+
+                                del piles[selected_pile][selected_index:]
+
+                                if piles[selected_pile]:
+                                    piles[selected_pile][-1][2] = True
+
+                                # ตรวจสอบและเก็บไพ่ K ถึง A ที่ครบชุด
+                                collect_complete() 
 
                         break
 
@@ -311,30 +401,10 @@ while running:
 pygame.quit()
 
 
-def check_complete(pile_number):
-    pile = piles[pile_number - 1]
 
-    # 1. ถ้ามีไพ่น้อยกว่า 13 ใบ จะยังไม่ครบชุด
-    if len(pile) < 13:
-        return False
-
-    # 2. เลือกไพ่ 13 ใบสุดท้ายของกอง
-    last_cards = pile[-13:]
-
-    # 3. ไพ่ใบแรกของชุดต้องเป็น K
-    if last_cards[0][0] != "K":
-        return False
-
-    # 4. เก็บดอกของไพ่ใบแรกไว้เปรียบเทียบ
-    suit = last_cards[0][1]
-
-    i = 0
-
-    # 5. ตรวจไพ่ทั้ง 13 ใบ
-    while i < 13:
-        card = last_cards[i]
-
-        # ถ้าเจอไพ่คว่ำหน้า ถือว่าไม่ครบ
+        
+        
+        
 
 
 
