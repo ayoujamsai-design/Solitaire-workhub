@@ -311,9 +311,30 @@ while running:
 pygame.quit()
 
 
-test
+def check_complete(pile_number):
+    pile = piles[pile_number - 1]
 
-        
+    # 1. ถ้ามีไพ่น้อยกว่า 13 ใบ จะยังไม่ครบชุด
+    if len(pile) < 13:
+        return False
+
+    # 2. เลือกไพ่ 13 ใบสุดท้ายของกอง
+    last_cards = pile[-13:]
+
+    # 3. ไพ่ใบแรกของชุดต้องเป็น K
+    if last_cards[0][0] != "K":
+        return False
+
+    # 4. เก็บดอกของไพ่ใบแรกไว้เปรียบเทียบ
+    suit = last_cards[0][1]
+
+    i = 0
+
+    # 5. ตรวจไพ่ทั้ง 13 ใบ
+    while i < 13:
+        card = last_cards[i]
+
+        # ถ้าเจอไพ่คว่ำหน้า ถือว่าไม่ครบ
 
 
 
