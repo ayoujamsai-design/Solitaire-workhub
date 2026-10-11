@@ -7,6 +7,7 @@ screen = pygame.display.set_mode((1000, 1000))
 pygame.display.set_caption("Solitaire")
 
 font = pygame.font.Font(None, 30)
+win_font = pygame.font.Font(None, 100)
 clock = pygame.time.Clock()
 
 suits = ["S", "H", "D", "C"]
@@ -439,6 +440,26 @@ while running:
             screen.blit(text, (x + 8, y + 8))
 
             pygame.draw.rect(screen, (255, 220, 0), rect, 3)
+
+            pygame.draw.rect(screen, (255, 220, 0), rect, 3)
+
+    # ตรวจชนะ
+    if len(completed_sets) == 4:
+        win_box = pygame.Rect(0, 0, 460, 150)
+        win_box.center = screen.get_rect().center
+
+        pygame.draw.rect(
+            screen, (20, 75, 45), win_box, border_radius=15
+        )
+        pygame.draw.rect(
+            screen, (255, 220, 0), win_box, 3, border_radius=15
+        )
+
+        win_text = win_font.render(
+            "YOU WIN!", True, (255, 255, 255)
+        )
+        text_rect = win_text.get_rect(center=win_box.center)
+        screen.blit(win_text, text_rect)
 
     pygame.display.flip()
     clock.tick(60)
