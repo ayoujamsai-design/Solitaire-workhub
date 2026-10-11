@@ -326,20 +326,42 @@ while running:
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
 
-    # ช่องเก็บไพ่ครบชุด 4 ช่อง
+    # ช่องเก็บชุดไพ่สำเร็จ 4 ช่อง
     for i in range(4):
         x = 530 + i * 110
         slot = pygame.Rect(x, 15, 100, 140)
 
-        pygame.draw.rect(
-            screen, (20, 75, 45), slot, border_radius=8
-        )
-        pygame.draw.rect(
-            screen, (200, 200, 200), slot, 2, border_radius=8
-        )
+        if i < len(completed_sets):
+            # ใช้ดอกไพ่จากชุดที่เก็บสำเร็จ
+            suit = completed_sets[i][0][1]
 
-        text = font.render("K - A", True, (200, 200, 200))
-        screen.blit(text, (x + 20, 70))
+            pygame.draw.rect(
+                screen, (255, 255, 255),
+                slot, border_radius=8
+            )
+
+            if suit == "H" or suit == "D":
+                text_color = (200, 0, 0)
+            else:
+                text_color = (0, 0, 0)
+
+            text = font.render("K " + suit, True, text_color)
+            screen.blit(text, (x + 8, 23))
+
+        else:
+            # ช่องที่ยังไม่มีชุดไพ่
+            pygame.draw.rect(
+                screen, (20, 75, 45),
+                slot, border_radius=8
+            )
+
+            text = font.render("K - A", True, (200, 200, 200))
+            screen.blit(text, (x + 20, 70))
+
+        pygame.draw.rect(
+            screen, (200, 200, 200),
+            slot, 2, border_radius=8
+        )
 
     # วาดไพ่ทั้ง 7 กอง
     for i in range(7):
