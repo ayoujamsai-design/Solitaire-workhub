@@ -174,7 +174,38 @@ def collect_complete():
 
         i += 1
 
+def collect_completed_sets():
+    for pile in piles:
+        # ตรวจ 13 ใบสุดท้ายของกอง
+        while len(pile) >= 13:
+            cards = pile[-13:]
+            suit = cards[0][1]
+            complete = True
 
+            for i in range(13):
+                card = cards[i]
+
+                # ต้องหงาย ดอกเดียวกัน และเรียง K ถึง A
+                if (
+                    card[2] == False
+                    or card[1] != suit
+                    or card[0] != ranks[12 - i]
+                ):
+                    complete = False
+                    break
+
+            if complete == False:
+                break
+
+            # เก็บทั้งชุด แล้วนำออกจากกอง
+            completed_sets.append(cards)
+            del pile[-13:]
+
+            # พลิกไพ่ที่ถูกเปิดเผย
+            if pile:
+                pile[-1][2] = True
+
+completed_sets = []  # เก็บชุดไพ่ที่เรียงครบแล้ว
 
 selected_pile = None
 selected_index = None
@@ -288,6 +319,10 @@ while running:
                 selected_pile = None
                 selected_index = None
 
+    # ตรวจชุดที่สำเร็จเมื่อไม่ได้ลากไพ่
+    if not dragging:
+        collect_completed_sets()
+    
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
 
