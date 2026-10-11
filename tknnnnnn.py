@@ -293,25 +293,13 @@ while running:
                     if drop_rect.collidepoint(mouse_x, mouse_y):
                         if i != selected_pile:
                             if can_place(moving_cards[0], piles[i]):
-                                # เพิ่มไพ่ลงกองปลายทาง
+                                # ย้ายไพ่เพียงครั้งเดียว
                                 piles[i].extend(moving_cards)
-
-                                # ลบไพ่ออกจากกองต้นทาง
                                 del piles[selected_pile][selected_index:]
 
-                                # พลิกไพ่ที่เปิดเผย
+                                # พลิกไพ่ที่ถูกเปิดเผย
                                 if piles[selected_pile]:
                                     piles[selected_pile][-1][2] = True
-                                    
-                                piles[i].extend(moving_cards)
-
-                                del piles[selected_pile][selected_index:]
-
-                                if piles[selected_pile]:
-                                    piles[selected_pile][-1][2] = True
-
-                                # ตรวจสอบและเก็บไพ่ K ถึง A ที่ครบชุด
-                                collect_complete() 
 
                         break
 
@@ -321,8 +309,8 @@ while running:
 
     # ตรวจชุดที่สำเร็จเมื่อไม่ได้ลากไพ่
     if not dragging:
-        collect_completed_sets()
-    
+       collect_completed_sets()
+
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
 
