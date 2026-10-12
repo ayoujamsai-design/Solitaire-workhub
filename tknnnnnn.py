@@ -1,5 +1,6 @@
 import pygame #นำเข้าpygame
 import random  #แจกไพ่แบบสุ่ม
+from pathlib import Path #เพิ่มpath
 
 pygame.init()
 
@@ -173,23 +174,48 @@ restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่ม
 completed_sets.clear()
 extra_cards.clear()
 
-piles = [
-    [
-        ["Q", "D", False],
-        ["7", "S", True],
-        ["3", "H", True],
-        ["J", "C", True]
-    ],
-    [["8", "S", True]],
-    [["8", "H", True]],
-    [],
-    [
-        ["K", "D", True],
-        ["5", "C", True]
-    ],
-    [],
-    [["9", "S", True]]
-]
+# โฟลเดอร์รูปไพ่
+cards_folder = (
+    Path(__file__).resolve().parent / "assets" / "cards"
+)
+
+suit_names = {
+    "S": "spades",
+    "H": "hearts",
+    "D": "diamonds",
+    "C": "clubs"
+}
+
+card_images = {}
+
+# โหลดหน้าไพ่ทั้งหมด
+for suit in suits:
+    for rank in ranks:
+        if rank.isdigit():
+            file_rank = rank.zfill(2)  # 2 เปลี่ยนเป็น 02
+        else:
+            file_rank = rank
+
+        filename = (
+            "card_" + suit_names[suit] + "_" + file_rank + ".png"
+        )
+
+        image = pygame.image.load(
+            str(cards_folder / filename)
+        ).convert_alpha()
+
+        card_images[(rank, suit)] = pygame.transform.smoothscale(
+            image, (100, 140)
+        )
+
+# โหลดหลังไพ่
+back_image = pygame.image.load(
+    str(cards_folder / "card_back.png")
+).convert_alpha()
+
+back_image = pygame.transform.smoothscale(
+    back_image, (100, 140)
+)
 
 running = True
 
