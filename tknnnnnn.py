@@ -23,8 +23,6 @@ for suit in suits:  #สร้างไพ่ทั้งหมด 52 ใบ
         
 random.shuffle(deck)  #สับไพ่แบบสุ่ม
 
-#print("Deck of cards:",deck) test
-
 piles = [[],[],[],[],[],[],[]]  #สร้าง list ว่างเพื่อเก็บกองไพ่ 7 กอง
 
 for i in range(7): #  7 กอง
@@ -39,12 +37,6 @@ for i in range(7): #  7 กอง
         piles[i].append(card)  #เอาไพ่แต่ละใบใส่ในกองไพ่แต่ละกอง
         
 extra_cards = deck  #ไพ่ที่เหลือจากการแจกไพ่ 7 กอง
-    
-#print("Piles of cards:",piles) test
-for i in range(7): #แสดงกองไพ่ 7 กอง
-    print("pile",i + 1,":",piles[i])  #แสดงกองไพ่แต่ละกอง
-    
-print("Extra cards:",extra_cards)  #แสดงไพ่ที่เหลือจากการแจกไพ่ 7 กอง
 
 def show_piles(pile_number):
     pile = piles[pile_number - 1]  #เลือกกองไพ่ที่ต้องการแสดง
@@ -78,8 +70,6 @@ def count_face_up_cards(pile_number):
         i += 1  #ไปตรวจใบถัดไป ทั้งไพ่หงายและไพ่คว่ำ
 
     return count
-
-print("จำนวนไพ่หงาย:", count_face_up_cards(1))
 
 def can_place(card, destination):
     # กองว่างวางได้เฉพาะ K
@@ -170,9 +160,6 @@ def collect_complete():
             # เปิดไพ่ใบสุดท้ายที่เหลือในกอง
             if len(piles[i]) > 0:
                 piles[i][-1][2] = True
-
-            print("Completed:", len(completed_sets))
-
         i += 1
 
 def collect_completed_sets():
