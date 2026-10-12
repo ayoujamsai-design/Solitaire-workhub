@@ -170,10 +170,6 @@ def restart_game():
 
 restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
 
-# ทดสอบกติกาการลากไพ่ชั่วคราว
-completed_sets.clear()
-extra_cards.clear()
-
 # โฟลเดอร์รูปไพ่
 cards_folder = (
     Path(__file__).resolve().parent / "assets" / "cards"
