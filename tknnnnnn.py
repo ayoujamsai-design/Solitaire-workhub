@@ -97,10 +97,12 @@ def can_place(card, destination):
 
 
 # ตำแหน่งปุ่ม Hint
-hint_rect = pygame.Rect(470, 55, 120, 50)
+hint_rect = pygame.Rect(30, 920, 120, 50)
 
 # เก็บตำแหน่งไพ่ที่ระบบแนะนำ
 hint_move = None
+hint_start_time = 0
+hint_duration = 1500  # แสดงคำใบ้ 1.5 วินาที
 
 # ข้อความเมื่อไม่มีไพ่ที่ย้ายได้
 hint_message = ""
@@ -303,6 +305,12 @@ while running:
                 dragging = False
 
                 mouse_x, mouse_y = event.pos
+                
+
+                # ถ้าคลิกที่อื่นนอกจากปุ่ม Hint ให้ปิดคำใบ้
+                if not hint_rect.collidepoint(mouse_x, mouse_y):
+                    hint_move = None
+                    hint_message = ""
 
                 # คลิกเริ่มเกมใหม่
                 if restart_rect.collidepoint(mouse_x, mouse_y):
@@ -310,9 +318,7 @@ while running:
                     continue
                 
                 
-                # คลิกปุ่ม Hint
                 if hint_rect.collidepoint(mouse_x, mouse_y):
-
                     hint_move = find_hint()
 
                     if hint_move is None:
@@ -320,25 +326,10 @@ while running:
                         hint_message_time = pygame.time.get_ticks()
                     else:
                         hint_message = ""
+                        hint_start_time = pygame.time.get_ticks()
 
                     continue
 
-
-                    # วาดปุ่ม Hint
-                pygame.draw.rect(
-                    screen, (255, 210, 70),
-                    hint_rect, border_radius=8
-                )
-
-                pygame.draw.rect(
-                    screen, (0, 0, 0),
-                    hint_rect, 2, border_radius=8
-                )
-
-                hint_text = font.render("Hint", True, (0, 0, 0))
-                hint_text_rect = hint_text.get_rect(center=hint_rect.center)
-
-                screen.blit(hint_text, hint_text_rect)
 
                 # เกมชนะ
                 if game_won:
@@ -421,7 +412,7 @@ while running:
 
     # ตรวจชุดที่สำเร็จเมื่อไม่ได้ลากไพ่
     if not dragging:
-       collect_completed_sets()
+        collect_completed_sets()
 
     # อัปเดตเวลาและคะแนนจนกว่าจะชนะ
     if not game_won:
@@ -436,7 +427,13 @@ while running:
 
         if len(completed_sets) == 4:
             game_won = True
+            
+        # ปิดคำใบ้อัตโนมัติหลัง 1.5 วินาที
+        if hint_move is not None:
+            current_time = pygame.time.get_ticks()
 
+            if current_time - hint_start_time >= hint_duration:
+                hint_move = None
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
 
@@ -457,21 +454,21 @@ while running:
     screen.blit(restart_text, restart_text_rect)
     
     
-# วาดปุ่ม Hint
-pygame.draw.rect(
-                screen, (255, 210, 70),
-                hint_rect, border_radius=8
-            )
+    # วาดปุ่ม Hint
+    pygame.draw.rect(
+                    screen, (255, 210, 70),
+                    hint_rect, border_radius=8
+                )
 
-pygame.draw.rect(
-                screen, (0, 0, 0),
-                hint_rect, 2, border_radius=8
-            )
+    pygame.draw.rect(
+                    screen, (0, 0, 0),
+                    hint_rect, 2, border_radius=8
+                )
 
-hint_text = font.render("Hint", True, (0, 0, 0))
-hint_text_rect = hint_text.get_rect(center=hint_rect.center)
+    hint_text = font.render("Hint", True, (0, 0, 0))
+    hint_text_rect = hint_text.get_rect(center=hint_rect.center)
 
-screen.blit(hint_text, hint_text_rect)
+    screen.blit(hint_text, hint_text_rect)
 
 
     minutes = elapsed_seconds // 60
@@ -535,6 +532,33 @@ screen.blit(hint_text, hint_text_rect)
                 image = back_image
 
             screen.blit(image, (x, y))
+            
+            # ===== แสดงคำแนะนำจากปุ่ม Hint =====
+    if hint_move is not None and not dragging:
+
+        source_i, card_j, dest_i = hint_move
+
+        # ไพ่ต้นทาง (สีเหลือง)
+        source_x = 40 + source_i * 135
+        source_y = 180 + card_j * 45
+
+        pygame.draw.rect(
+            screen, (255, 255, 0),
+            (source_x, source_y, 100, 140), 5
+        )
+
+        # กองปลายทาง (สีฟ้า)
+        dest_x = 40 + dest_i * 135
+
+        if len(piles[dest_i]) > 0:
+            dest_y = 180 + (len(piles[dest_i]) - 1) * 45
+        else:
+            dest_y = 180
+
+        pygame.draw.rect(
+            screen, (0, 255, 255),
+            (dest_x, dest_y, 100, 140), 5
+        )
 
         # กองไพ่สำรองด้านซ้ายบน
     stock_rect = pygame.Rect(40, 15, 100, 140)
