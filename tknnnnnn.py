@@ -9,6 +9,7 @@ pygame.display.set_caption("Solitaire")
 
 font = pygame.font.Font(None, 30)
 status_font = pygame.font.Font(None, 24)
+result_font = pygame.font.Font(None, 64)
 win_font = pygame.font.Font(None, 100)
 clock = pygame.time.Clock()
 
@@ -249,8 +250,6 @@ elapsed_seconds = 0
 game_won = False
 game_over = False
 score = 10000
-
-
 
 running = True
 
@@ -495,23 +494,55 @@ while running:
                 screen, (255, 220, 0), rect, 3
             )
 
-    # ตรวจชนะ
-    if len(completed_sets) == 4:
-        win_box = pygame.Rect(0, 0, 460, 150)
-        win_box.center = screen.get_rect().center
+    # หน้าสรุปเมื่อเกมจบ
+    if game_won or game_over:
+        result_box = pygame.Rect(0, 0, 560, 340)
+        result_box.center = screen.get_rect().center
 
         pygame.draw.rect(
-            screen, (20, 75, 45), win_box, border_radius=15
+            screen, (20, 60, 40),
+            result_box, border_radius=15
         )
         pygame.draw.rect(
-            screen, (255, 220, 0), win_box, 3, border_radius=15
+            screen, (255, 220, 0),
+            result_box, 3, border_radius=15
         )
 
-        win_text = win_font.render(
-            "YOU WIN!", True, (255, 255, 255)
+        if game_won:
+            title = "YOU WIN!"
+        else:
+            title = "NO MOVES LEFT"
+
+        title_image = result_font.render(
+            title, True, (255, 220, 0)
         )
-        text_rect = win_text.get_rect(center=win_box.center)
-        screen.blit(win_text, text_rect)
+        title_rect = title_image.get_rect(
+            center=(result_box.centerx, result_box.y + 55)
+        )
+        screen.blit(title_image, title_rect)
+
+        minutes = elapsed_seconds // 60
+        seconds = elapsed_seconds % 60
+
+        lines = [
+            f"Score: {score}",
+            f"Time: {minutes:02d}:{seconds:02d}",
+            f"Moves: {move_count}",
+            f"Completed sets: {len(completed_sets)} / 4",
+            "Click Restart to play again"
+        ]
+
+        for i in range(len(lines)):
+            line_image = font.render(
+                lines[i], True, (255, 255, 255)
+            )
+            line_rect = line_image.get_rect(
+                center=(
+                    result_box.centerx,
+                    result_box.y + 120 + i * 40
+                )
+            )
+            screen.blit(line_image, line_rect)
 
     pygame.display.flip()
     clock.tick(60)
