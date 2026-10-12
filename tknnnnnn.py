@@ -8,6 +8,7 @@ screen = pygame.display.set_mode((1000, 1000))
 pygame.display.set_caption("Solitaire")
 
 font = pygame.font.Font(None, 30)
+status_font = pygame.font.Font(None, 24)
 win_font = pygame.font.Font(None, 100)
 clock = pygame.time.Clock()
 
@@ -138,6 +139,7 @@ def restart_game():
     global piles, extra_cards
     global selected_pile, selected_index, dragging
     global move_count
+    global start_ticks, elapsed_seconds, game_won, score
 
     # สร้างไพ่ใหม่ 52 ใบ
     new_deck = []
@@ -169,6 +171,10 @@ def restart_game():
     selected_index = None
     dragging = False
     move_count = 0
+    start_ticks = pygame.time.get_ticks()
+    elapsed_seconds = 0
+    game_won = False
+    score = 10000
 
 restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
 
@@ -217,6 +223,11 @@ back_image = pygame.transform.smoothscale(
 
 move_count = 0
 
+start_ticks = pygame.time.get_ticks()
+elapsed_seconds = 0
+game_won = False
+score = 10000
+
 running = True
 
 while running:
@@ -236,6 +247,9 @@ while running:
                 # คลิกเริ่มเกมใหม่
                 if restart_rect.collidepoint(mouse_x, mouse_y):
                     restart_game()
+                    continue
+                # เกมชนะ
+                if game_won:
                     continue
 
                 # คลิกกองไพ่สำรองซ้ายบน
@@ -307,7 +321,6 @@ while running:
                                 # พลิกไพ่ที่ถูกเปิดเผย
                                 if piles[selected_pile]:
                                     piles[selected_pile][-1][2] = True
-
                         break
 
                 dragging = False
@@ -317,6 +330,20 @@ while running:
     # ตรวจชุดที่สำเร็จเมื่อไม่ได้ลากไพ่
     if not dragging:
        collect_completed_sets()
+
+    # อัปเดตเวลาและคะแนนจนกว่าจะชนะ
+    if not game_won:
+        elapsed_seconds = (
+            pygame.time.get_ticks() - start_ticks
+        ) // 1000
+
+        score = max(
+            0,
+            10000 - elapsed_seconds * 2 - move_count * 20
+        )
+
+        if len(completed_sets) == 4:
+            game_won = True
 
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
@@ -336,6 +363,18 @@ while running:
         center=restart_rect.center
     )
     screen.blit(restart_text, restart_text_rect)
+
+    minutes = elapsed_seconds // 60
+    seconds = elapsed_seconds % 60
+
+    status_text = status_font.render(
+        f"Score: {score}    "
+        f"Time: {minutes:02d}:{seconds:02d}    "
+        f"Moves: {move_count}",
+        True,
+        (255, 255, 255)
+    )
+    screen.blit(status_text, (40, 160))
 
     # ช่องเก็บชุดไพ่สำเร็จ 4 ช่อง
     for i in range(4):
@@ -446,12 +485,6 @@ while running:
         text_rect = win_text.get_rect(center=win_box.center)
         screen.blit(win_text, text_rect)
 
-    moves_text = font.render(
-        f"Moves: {move_count}",
-        True,
-        (255, 255, 255)
-    )
-    screen.blit(moves_text, (300, 115))
     pygame.display.flip()
     clock.tick(60)
 
