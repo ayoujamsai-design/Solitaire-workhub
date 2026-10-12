@@ -173,24 +173,6 @@ restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่ม
 completed_sets.clear()
 extra_cards.clear()
 
-piles = [
-    [
-        ["Q", "D", False],
-        ["7", "S", True],
-        ["3", "H", True],
-        ["J", "C", True]
-    ],
-    [["8", "S", True]],
-    [["8", "H", True]],
-    [],
-    [
-        ["K", "D", True],
-        ["5", "C", True]
-    ],
-    [],
-    [["9", "S", True]]
-]
-
 running = True
 
 while running:
