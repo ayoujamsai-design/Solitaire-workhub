@@ -94,6 +94,55 @@ def can_place(card, destination):
 
     return card_value + 1 == top_value
 
+
+
+# ตำแหน่งปุ่ม Hint
+hint_rect = pygame.Rect(470, 55, 120, 50)
+
+# เก็บตำแหน่งไพ่ที่ระบบแนะนำ
+hint_move = None
+
+# ข้อความเมื่อไม่มีไพ่ที่ย้ายได้
+hint_message = ""
+hint_message_time = 0
+
+
+def find_hint():
+    # ตรวจสอบไพ่จากทั้ง 7 กอง
+    for i in range(7):
+        source = piles[i]
+
+        # ตรวจไพ่แต่ละใบในกองต้นทาง
+        for j in range(len(source)):
+
+            # ข้ามไพ่คว่ำ
+            if source[j][2] == False:
+                continue
+
+            card = source[j]
+
+            # ตรวจสอบกองปลายทางทั้ง 7 กอง
+            for k in range(7):
+
+                # ห้ามย้ายกลับกองเดิม
+                if i == k:
+                    continue
+
+                # ใช้กติกาจากฟังก์ชันเดิม
+                if can_place(card, piles[k]):
+
+                    # ป้องกัน Hint ที่ย้าย K กองเดียว
+                    # ไปยังกองว่างโดยไม่เกิดประโยชน์
+                    if j == 0 and len(piles[k]) == 0:
+                        continue
+
+                    # คืนตำแหน่งต้นทาง, ไพ่, ปลายทาง
+                    return (i, j, k)
+
+    # ไม่พบการย้ายที่ทำได้
+    return None
+
+
 completed_sets = []  # เก็บชุดไพ่ K ถึง A ที่เรียงสำเร็จ
 
 def collect_completed_sets():
@@ -131,6 +180,8 @@ selected_pile = None   # กองที่เลือก
 selected_index = None  # ตำแหน่งไพ่ที่เลือก
 
 dragging = False
+hint_move = None
+hint_message = ""
 offset_x = 0
 offset_y = 0
 
@@ -140,6 +191,15 @@ def restart_game():
     global selected_pile, selected_index, dragging
     global move_count
     global start_ticks, elapsed_seconds, game_won, score
+    global hint_move, hint_message
+
+    hint_move = None
+    hint_message = ""
+    
+    
+
+    
+
 
     # สร้างไพ่ใหม่ 52 ใบ
     new_deck = []
@@ -248,6 +308,38 @@ while running:
                 if restart_rect.collidepoint(mouse_x, mouse_y):
                     restart_game()
                     continue
+                
+                
+                # คลิกปุ่ม Hint
+                if hint_rect.collidepoint(mouse_x, mouse_y):
+
+                    hint_move = find_hint()
+
+                    if hint_move is None:
+                        hint_message = "NO AVAILABLE MOVES"
+                        hint_message_time = pygame.time.get_ticks()
+                    else:
+                        hint_message = ""
+
+                    continue
+
+
+                    # วาดปุ่ม Hint
+                pygame.draw.rect(
+                    screen, (255, 210, 70),
+                    hint_rect, border_radius=8
+                )
+
+                pygame.draw.rect(
+                    screen, (0, 0, 0),
+                    hint_rect, 2, border_radius=8
+                )
+
+                hint_text = font.render("Hint", True, (0, 0, 0))
+                hint_text_rect = hint_text.get_rect(center=hint_rect.center)
+
+                screen.blit(hint_text, hint_text_rect)
+
                 # เกมชนะ
                 if game_won:
                     continue
@@ -363,6 +455,24 @@ while running:
         center=restart_rect.center
     )
     screen.blit(restart_text, restart_text_rect)
+    
+    
+# วาดปุ่ม Hint
+pygame.draw.rect(
+                screen, (255, 210, 70),
+                hint_rect, border_radius=8
+            )
+
+pygame.draw.rect(
+                screen, (0, 0, 0),
+                hint_rect, 2, border_radius=8
+            )
+
+hint_text = font.render("Hint", True, (0, 0, 0))
+hint_text_rect = hint_text.get_rect(center=hint_rect.center)
+
+screen.blit(hint_text, hint_text_rect)
+
 
     minutes = elapsed_seconds // 60
     seconds = elapsed_seconds % 60
@@ -484,6 +594,41 @@ while running:
         )
         text_rect = win_text.get_rect(center=win_box.center)
         screen.blit(win_text, text_rect)
+        
+        
+                
+        # แสดงข้อความเมื่อไม่มีการย้ายที่เป็นไปได้
+        if hint_message != "":
+
+            current_time = pygame.time.get_ticks()
+
+            # แสดงข้อความ 2 วินาที
+            if current_time - hint_message_time < 2000:
+
+                message_box = pygame.Rect(250, 400, 500, 150)
+
+                pygame.draw.rect(
+                    screen, (30, 40, 40),
+                    message_box, border_radius=12
+                )
+
+                pygame.draw.rect(
+                    screen, (255, 80, 80),
+                    message_box, 3, border_radius=12
+                )
+
+                message_text = font.render(
+                    hint_message, True, (255, 255, 255)
+                )
+
+                screen.blit(
+                    message_text,
+                    message_text.get_rect(center=message_box.center)
+                )
+
+            else:
+                hint_message = ""
+
 
     pygame.display.flip()
     clock.tick(60)
