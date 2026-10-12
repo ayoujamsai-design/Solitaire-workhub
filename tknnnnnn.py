@@ -137,6 +137,7 @@ offset_y = 0
 def restart_game():
     global piles, extra_cards
     global selected_pile, selected_index, dragging
+    global move_count
 
     # สร้างไพ่ใหม่ 52 ใบ
     new_deck = []
@@ -167,6 +168,7 @@ def restart_game():
     selected_pile = None
     selected_index = None
     dragging = False
+    move_count = 0
 
 restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
 
@@ -213,6 +215,8 @@ back_image = pygame.transform.smoothscale(
     back_image, (100, 140)
 )
 
+move_count = 0
+
 running = True
 
 while running:
@@ -245,7 +249,9 @@ while running:
                                 card[2] = True
                                 piles[i].append(card)
 
-                    # จบเหตุการณ์นี้ ไม่ตรวจเลือกไพ่ต่อ
+                        # แจกทั้ง 3 ใบ นับเป็น 1 ครั้ง
+                        move_count += 1
+
                     continue
 
                 for i in range(7):
@@ -295,6 +301,8 @@ while running:
                                 # ย้ายไพ่เพียงครั้งเดียว
                                 piles[i].extend(moving_cards)
                                 del piles[selected_pile][selected_index:]
+
+                                move_count += 1
 
                                 # พลิกไพ่ที่ถูกเปิดเผย
                                 if piles[selected_pile]:
@@ -438,6 +446,12 @@ while running:
         text_rect = win_text.get_rect(center=win_box.center)
         screen.blit(win_text, text_rect)
 
+    moves_text = font.render(
+        f"Moves: {move_count}",
+        True,
+        (255, 255, 255)
+    )
+    screen.blit(moves_text, (300, 115))
     pygame.display.flip()
     clock.tick(60)
 
