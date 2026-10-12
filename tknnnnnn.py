@@ -339,21 +339,11 @@ while running:
         slot = pygame.Rect(x, 15, 100, 140)
 
         if i < len(completed_sets):
-            # ใช้ดอกไพ่จากชุดที่เก็บสำเร็จ
             suit = completed_sets[i][0][1]
-
-            pygame.draw.rect(
-                screen, (255, 255, 255),
-                slot, border_radius=8
+            screen.blit(
+                card_images[("K", suit)],
+                slot.topleft
             )
-
-            if suit == "H" or suit == "D":
-                text_color = (200, 0, 0)
-            else:
-                text_color = (0, 0, 0)
-
-            text = font.render("K " + suit, True, text_color)
-            screen.blit(text, (x + 8, 23))
 
         else:
             # ช่องที่ยังไม่มีชุดไพ่
@@ -386,38 +376,22 @@ while running:
             y = 180 + j * 45
             rect = pygame.Rect(x, y, 100, 140)
 
-            if card[2] == True:
-                pygame.draw.rect(screen, (255, 255, 255), rect)
-
-                if card[1] == "H" or card[1] == "D":
-                    text_color = (200, 0, 0)
-                else:
-                    text_color = (0, 0, 0)
-
-                text = font.render(
-                    card[0] + " " + card[1],
-                    True,
-                    text_color
-                )
-                screen.blit(text, (x + 8, y + 8))
-
+            if card[2]:
+                image = card_images[(card[0], card[1])]
             else:
-                pygame.draw.rect(screen, (50, 70, 160), rect)
+                image = back_image
 
-            pygame.draw.rect(screen, (0, 0, 0), rect, 2)
+            screen.blit(image, (x, y))
 
         # กองไพ่สำรองด้านซ้ายบน
     stock_rect = pygame.Rect(40, 15, 100, 140)
 
     if len(extra_cards) > 0:
-        # หลังไพ่
-        pygame.draw.rect(
-            screen, (50, 70, 160), stock_rect, border_radius=8
-        )
+        screen.blit(back_image, stock_rect.topleft)
     else:
-        # ช่องว่างเมื่อแจกหมด
         pygame.draw.rect(
-            screen, (20, 75, 45), stock_rect, border_radius=8
+            screen, (20, 75, 45),
+            stock_rect, border_radius=8
         )
 
     pygame.draw.rect(
@@ -443,23 +417,12 @@ while running:
             y = mouse_y - offset_y + j * 45
             rect = pygame.Rect(x, y, 100, 140)
 
-            pygame.draw.rect(screen, (255, 255, 255), rect)
+            image = card_images[(card[0], card[1])]
+            screen.blit(image, (x, y))
 
-            if card[1] == "H" or card[1] == "D":
-                text_color = (200, 0, 0)
-            else:
-                text_color = (0, 0, 0)
-
-            text = font.render(
-                card[0] + " " + card[1],
-                True,
-                text_color
+            pygame.draw.rect(
+                screen, (255, 220, 0), rect, 3
             )
-            screen.blit(text, (x + 8, y + 8))
-
-            pygame.draw.rect(screen, (255, 220, 0), rect, 3)
-
-            pygame.draw.rect(screen, (255, 220, 0), rect, 3)
 
     # ตรวจชนะ
     if len(completed_sets) == 4:
