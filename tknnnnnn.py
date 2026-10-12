@@ -220,6 +220,43 @@ dragging = False
 offset_x = 0
 offset_y = 0
 
+
+def restart_game():
+    global piles, extra_cards
+    global selected_pile, selected_index, dragging
+
+    # สร้างไพ่ใหม่ 52 ใบ
+    new_deck = []
+
+    for suit in suits:
+        for rank in ranks:
+            new_deck.append([rank, suit, True])
+
+    random.shuffle(new_deck)
+
+    # แจกไพ่ใหม่ 7 กอง
+    piles = [[], [], [], [], [], [], []]
+
+    for i in range(7):
+        for j in range(7):
+            card = new_deck.pop()
+
+            # กอง 1–4 คว่ำ 3 ใบแรก
+            if i < 4 and j < 3:
+                card[2] = False
+
+            piles[i].append(card)
+
+    extra_cards = new_deck
+
+    # ล้างชุดที่สำเร็จและยกเลิกการลาก
+    completed_sets.clear()
+    selected_pile = None
+    selected_index = None
+    dragging = False
+
+restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
+
 running = True
 
 while running:
@@ -235,6 +272,11 @@ while running:
                 dragging = False
 
                 mouse_x, mouse_y = event.pos
+
+                # คลิกเริ่มเกมใหม่
+                if restart_rect.collidepoint(mouse_x, mouse_y):
+                    restart_game()
+                    continue
 
                 # คลิกกองไพ่สำรองซ้ายบน
                 stock_rect = pygame.Rect(40, 15, 100, 140)
@@ -314,6 +356,22 @@ while running:
 
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
+
+        # ปุ่ม Restart
+    pygame.draw.rect(
+        screen, (240, 240, 240),
+        restart_rect, border_radius=8
+    )
+    pygame.draw.rect(
+        screen, (0, 0, 0),
+        restart_rect, 2, border_radius=8
+    )
+
+    restart_text = font.render("Restart", True, (0, 0, 0))
+    restart_text_rect = restart_text.get_rect(
+        center=restart_rect.center
+    )
+    screen.blit(restart_text, restart_text_rect)
 
     # ช่องเก็บชุดไพ่สำเร็จ 4 ช่อง
     for i in range(4):
