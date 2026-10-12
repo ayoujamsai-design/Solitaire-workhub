@@ -134,12 +134,32 @@ dragging = False
 offset_x = 0
 offset_y = 0
 
+def has_available_move():
+    # ยังแจกไพ่สำรองได้ ถือว่ายังเล่นต่อได้
+    if len(extra_cards) > 0:
+        return True
+
+    # ตรวจไพ่หงายทุกใบ ไม่ใช่เฉพาะใบสุดท้าย
+    for source_index in range(7):
+        for card in piles[source_index]:
+            if card[2] == False:
+                continue
+
+            for destination_index in range(7):
+                if source_index == destination_index:
+                    continue
+
+                if can_place(card, piles[destination_index]):
+                    return True
+
+    return False
 
 def restart_game():
     global piles, extra_cards
     global selected_pile, selected_index, dragging
     global move_count
     global start_ticks, elapsed_seconds, game_won, score
+    global game_over
 
     # สร้างไพ่ใหม่ 52 ใบ
     new_deck = []
@@ -175,6 +195,7 @@ def restart_game():
     elapsed_seconds = 0
     game_won = False
     score = 10000
+    game_over = False
 
 restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
 
@@ -226,7 +247,10 @@ move_count = 0
 start_ticks = pygame.time.get_ticks()
 elapsed_seconds = 0
 game_won = False
+game_over = False
 score = 10000
+
+
 
 running = True
 
@@ -249,7 +273,7 @@ while running:
                     restart_game()
                     continue
                 # เกมชนะ
-                if game_won:
+                if game_won or game_over:
                     continue
 
                 # คลิกกองไพ่สำรองซ้ายบน
@@ -327,12 +351,12 @@ while running:
                 selected_pile = None
                 selected_index = None
 
-    # ตรวจชุดที่สำเร็จเมื่อไม่ได้ลากไพ่
-    if not dragging:
-       collect_completed_sets()
+    # ตรวจและเก็บชุดเมื่อไม่ได้ลาก
+    if not dragging and not game_won and not game_over:
+        collect_completed_sets()
 
-    # อัปเดตเวลาและคะแนนจนกว่าจะชนะ
-    if not game_won:
+    # อัปเดตจนกว่าเกมจะจบ
+    if not game_won and not game_over:
         elapsed_seconds = (
             pygame.time.get_ticks() - start_ticks
         ) // 1000
@@ -342,8 +366,12 @@ while running:
             10000 - elapsed_seconds * 2 - move_count * 20
         )
 
+        # ตรวจชนะก่อนตรวจว่าเล่นต่อไม่ได้
         if len(completed_sets) == 4:
             game_won = True
+
+        elif not dragging and not has_available_move():
+            game_over = True
 
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
