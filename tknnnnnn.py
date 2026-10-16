@@ -5,11 +5,7 @@ from pathlib import Path  # ใช้จัดการตำแหน่งไ�
 
 pygame.init()  # เริ่มต้น Pygame
 
-font = pygame.font.Font(None, 30)
-status_font = pygame.font.Font(None, 24)
-result_font = pygame.font.Font(None, 64)
-win_font = pygame.font.Font(None, 100)
-clock = pygame.time.Clock()
+# ==================== ตั้งค่าหน้าจอ ====================
 
 WIDTH = 1000  # ความกว้างหน้าจอ
 HEIGHT = 1000  # ความสูงหน้าจอ
@@ -33,6 +29,7 @@ PILE_GAP_X = 135  # ระยะห่างระหว่างกองไพ
 
 NORMAL_SPACING = 45  # ระยะห่างปกติระหว่างไพ่
 BOTTOM_MARGIN = 20  # ระยะเว้นจากขอบล่างหน้าจอ
+TABLEAU_BOTTOM = 900  # ขอบล่างของพื้นที่วางไพ่
 
 suits = ["S", "H", "D", "C"]  # ดอกไพ่ทั้ง 4 ดอก
 
@@ -78,152 +75,10 @@ hint_message_time = 0  # เวลาเริ่มแสดงข้อคว�
 
 # ==================== โหลดรูปภาพไพ่ ====================
 
-def find_hint():
-    # ตรวจสอบไพ่จากทั้ง 7 กอง
-    for i in range(7):
-
-        # ตรวจไพ่แต่ละใบในกองต้นทาง
-        for j in range(len(source)):
-
-            # ข้ามไพ่คว่ำ
-            if source[j][2] == False:
-                continue
-
-            card = source[j]
-
-            # ตรวจสอบกองปลายทางทั้ง 7 กอง
-            for k in range(7):
-
-                # ห้ามย้ายกลับกองเดิม
-                if i == k:
-                    continue
-
-                # ใช้กติกาจากฟังก์ชันเดิม
-                if can_place(card, piles[k]):
-
-                    # ป้องกัน Hint ที่ย้าย K กองเดียว
-                    # ไปยังกองว่างโดยไม่เกิดประโยชน์
-                    if j == 0 and len(piles[k]) == 0:
-                        continue
-
-                    # คืนตำแหน่งต้นทาง, ไพ่, ปลายทาง
-                    return (i, j, k)
-
-    # ไม่พบการย้ายที่ทำได้
-    return None
-
-
-completed_sets = []  # เก็บชุดไพ่ K ถึง A ที่เรียงสำเร็จ
-
-def collect_completed_sets():
-    for pile in piles:
-        # ตรวจ 13 ใบสุดท้ายของกอง
-        while len(pile) >= 13:
-            cards = pile[-13:]
-            suit = cards[0][1]
-            complete = True
-
-            for i in range(13):
-                card = cards[i]
-
-                # ต้องหงาย ดอกเดียวกัน และเรียง K ถึง A
-                if (
-                    card[2] == False
-                    or card[1] != suit
-                    or card[0] != ranks[12 - i]
-                ):
-                    complete = False
-                    break
-
-            if complete == False:
-                break
-
-            # เก็บทั้งชุด แล้วนำออกจากกอง
-            completed_sets.append(cards)
-            del pile[-13:]
-
-            # พลิกไพ่ที่ถูกเปิดเผย
-            if pile:
-                pile[-1][2] = True
-
-selected_pile = None   # กองที่เลือก
-selected_index = None  # ตำแหน่งไพ่ที่เลือก
-
-dragging = False
-hint_move = None
-hint_message = ""
-offset_x = 0
-offset_y = 0
-
-def has_available_move():
-    # ยังแจกไพ่สำรองได้ ถือว่ายังเล่นต่อได้
-    if len(extra_cards) > 0:
-        return True
-
-    # ตรวจไพ่หงายทุกใบ ไม่ใช่เฉพาะใบสุดท้าย
-    for source_index in range(7):
-        for card in piles[source_index]:
-            if card[2] == False:
-                continue
-
-            for destination_index in range(7):
-                if source_index == destination_index:
-                    continue
-
-                if can_place(card, piles[destination_index]):
-                    return True
-
-    return False
-
-def restart_game():
-    global piles, extra_cards
-    global selected_pile, selected_index, dragging
-    global move_count
-    global start_ticks, elapsed_seconds, game_won, score
-    global game_over
-
-    # สร้างไพ่ใหม่ 52 ใบ
-    new_deck = []
-
-    for suit in suits:
-        for rank in ranks:
-            new_deck.append([rank, suit, True])
-
-    random.shuffle(new_deck)
-
-    # แจกไพ่ใหม่ 7 กอง
-    piles = [[], [], [], [], [], [], []]
-
-    for i in range(7):
-        for j in range(7):
-            card = new_deck.pop()
-
-            # กอง 1–4 คว่ำ 3 ใบแรก
-            if i < 4 and j < 3:
-                card[2] = False
-
-            piles[i].append(card)
-
-    extra_cards = new_deck
-
-    # ล้างชุดที่สำเร็จและยกเลิกการลาก
-    completed_sets.clear()
-    selected_pile = None
-    selected_index = None
-    dragging = False
-    move_count = 0
-    start_ticks = pygame.time.get_ticks()
-    elapsed_seconds = 0
-    game_won = False
-    score = 10000
-    game_over = False
-
-restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
-
-# โฟลเดอร์รูปไพ่
-cards_folder = {
+cards_folder = (
     Path(__file__).resolve().parent / "assets" / "cards"
-}
+)  # โฟลเดอร์เก็บรูปไพ่
+
 suit_names = {
     "S": "spades",  # โพดำ
     "H": "hearts",  # โพแดง
@@ -266,34 +121,17 @@ back_image = pygame.transform.smoothscale(
 
 # ==================== ฟังก์ชันจัดตำแหน่งไพ่ ====================
 
-start_ticks = pygame.time.get_ticks()
-elapsed_seconds = 0
-game_won = False
-game_over = False
-score = 10000
+def get_card_spacing(card_count):
+    available_height = (
+        TABLEAU_BOTTOM - PILE_START_Y - CARD_HEIGHT - BOTTOM_MARGIN
+    )
 
-completed_sets.clear()
-extra_cards.clear()
+    if card_count <= 1:
+        return NORMAL_SPACING
 
-piles = [
-    [["A", "S", True]],
-    [["A", "H", True]],
-    [["A", "D", True]],
-    [["A", "C", True]],
-    [],
-    [],
-    []
-]
-#ใส่กอ่น running true
+    spacing = available_height / (card_count - 1)
 
-running = True
-
-if card_count <= 1:  # หากมีไพ่ไม่เกิน 1 ใบ
-        return NORMAL_SPACING  # ใช้ระยะห่างปกติ
-
-    spacing = available_height / (card_count - 1)  # คำนวณระยะที่พอดีหน้าจอ
-
-    return min(NORMAL_SPACING, spacing)  # จำกัดระยะไม่ให้เกินค่าปกติ
+    return min(NORMAL_SPACING, spacing)
 
 
 def get_card_y(pile_index, card_index):  # หาตำแหน่ง Y ของไพ่
@@ -664,9 +502,7 @@ while running:  # วนลูปหลักของเกม
 
             # ==================== กดไพ่สำรอง ====================
 
-                # เกมชนะ
-                if game_won or game_over:
-                    continue
+            if stock_rect.collidepoint(mouse_x, mouse_y):
 
                 if len(extra_cards) > 0:  # หากยังมีไพ่สำรอง
 
@@ -719,12 +555,61 @@ while running:  # วนลูปหลักของเกม
                 if selected_pile is not None:  # หากเลือกไพ่ได้
                     break  # หยุดตรวจกองอื่น
 
-    # ตรวจและเก็บชุดเมื่อไม่ได้ลาก
-    if not dragging and not game_won and not game_over:
-        collect_completed_sets()
+        # ==================== ปล่อยไพ่ ====================
 
-    # อัปเดตจนกว่าเกมจะจบ
-    if not game_won and not game_over:
+        elif event.type == pygame.MOUSEBUTTONUP:  # หากปล่อยปุ่มเมาส์
+
+            if event.button == 1 and dragging:  # หากปล่อยคลิกซ้ายขณะลาก
+
+                if not game_won and not game_over:  # หากเกมยังไม่จบ
+
+                    mouse_x, mouse_y = event.pos  # อ่านตำแหน่งปล่อยเมาส์
+
+                    moving_cards = piles[
+                        selected_pile
+                    ][selected_index:]  # เลือกไพ่ตั้งแต่ใบที่ลากถึงใบบนสุด
+
+                    for i in range(7):  # ตรวจทุกกองปลายทาง
+
+                        x = get_pile_x(i)  # หาตำแหน่ง X ของกอง
+
+                        drop_rect = pygame.Rect(
+                            x, PILE_START_Y,
+                            CARD_WIDTH, HEIGHT - PILE_START_Y
+                        )  # กำหนดพื้นที่ปล่อยไพ่
+
+                        if drop_rect.collidepoint(mouse_x, mouse_y):  # หากปล่อยในกองนี้
+
+                            if i != selected_pile:  # หากไม่ใช่กองเดิม
+
+                                if can_place(
+                                    moving_cards[0], piles[i]
+                                ):  # หากวางไพ่ถูกกติกา
+
+                                    piles[i].extend(moving_cards)  # ย้ายไพ่ไปกองปลายทาง
+
+                                    del piles[
+                                        selected_pile
+                                    ][selected_index:]  # ลบไพ่จากกองต้นทาง
+
+                                    move_count += 1  # เพิ่มจำนวนครั้งที่ย้าย
+
+                                    if piles[selected_pile]:  # หากกองเดิมยังมีไพ่
+                                        piles[selected_pile][-1][2] = True  # เปิดไพ่ใบบนสุด
+
+                            break  # หยุดตรวจปลายทาง
+
+                dragging = False  # หยุดลากไพ่
+                selected_pile = None  # ล้างกองที่เลือก
+                selected_index = None  # ล้างตำแหน่งไพ่
+
+    # ==================== ตรวจสถานะเกม ====================
+
+    if not dragging and not game_won and not game_over:
+        collect_completed_sets()  # ตรวจชุดไพ่สำเร็จ
+
+    if not game_won and not game_over:  # หากเกมยังดำเนินอยู่
+
         elapsed_seconds = (
             pygame.time.get_ticks() - start_ticks
         ) // 1000  # คำนวณเวลาที่เล่น
@@ -734,19 +619,11 @@ while running:  # วนลูปหลักของเกม
             10000 - elapsed_seconds * 2 - move_count * 20
         )  # คำนวณคะแนนตามเวลาและจำนวนครั้งที่ย้าย
 
-        # ตรวจชนะก่อนตรวจว่าเล่นต่อไม่ได้
-        if len(completed_sets) == 4:
-            game_won = True
-            
-        # ปิดคำใบ้อัตโนมัติหลัง 1.5 วินาที
-        if hint_move is not None:
-            current_time = pygame.time.get_ticks()
+        if len(completed_sets) == 4:  # หากเรียงครบสี่ชุด
+            game_won = True  # ชนะเกม
 
-        elif not dragging and not has_available_move():
-            game_over = True
-
-    # ล้างภาพเก่าทุกเฟรม
-    screen.fill((30, 100, 60))
+        elif check_game_over():  # หากไม่มีการย้ายที่ Hint ยอมรับและ Stock หมด
+            game_over = True  # แพ้เกม
 
     if hint_move is not None:  # หากกำลังแสดงคำใบ้
 
@@ -941,60 +818,27 @@ while running:  # วนลูปหลักของเกม
                 screen, (255, 220, 0), rect, 3
             )  # วาดกรอบสีเหลืองรอบไพ่ที่ลาก
 
-    # หน้าสรุปเมื่อเกมจบ
-    if game_won or game_over:
-        result_box = pygame.Rect(0, 0, 560, 340)
-        result_box.center = screen.get_rect().center
+    # ==================== แสดงข้อความ Hint ====================
 
-        pygame.draw.rect(
-            screen, (20, 60, 40),
-            result_box, border_radius=15
-        )
-        pygame.draw.rect(
-            screen, (255, 220, 0),
-            result_box, 3, border_radius=15
-        )
+    if hint_message != "" and not game_over:  # หากมีข้อความแจ้งเตือน
 
-        if game_won:
-            title = "YOU WIN!"
-        else:
-            title = "NO MOVES LEFT"
+        current_time = pygame.time.get_ticks()  # อ่านเวลาปัจจุบัน
 
-        title_image = result_font.render(
-            title, True, (255, 220, 0)
-        )
-        title_rect = title_image.get_rect(
-            center=(result_box.centerx, result_box.y + 55)
-        )
-        screen.blit(title_image, title_rect)
+        if current_time - hint_message_time < 2000:  # แสดงไม่เกิน 2 วินาที
 
-        minutes = elapsed_seconds // 60
-        seconds = elapsed_seconds % 60
+            message_box = pygame.Rect(
+                250, 400, 500, 150
+            )  # กำหนดพื้นที่ข้อความ
 
-        lines = [
-            f"Score: {score}",
-            f"Time: {minutes:02d}:{seconds:02d}",
-            f"Moves: {move_count}",
-            f"Completed sets: {len(completed_sets)} / 4",
-            "Click Restart to play again"
-        ]
+            pygame.draw.rect(
+                screen, (30, 40, 40),
+                message_box, border_radius=12
+            )  # วาดพื้นหลังกล่องข้อความ
 
-        for i in range(len(lines)):
-            line_image = font.render(
-                lines[i], True, (255, 255, 255)
-            )
-            line_rect = line_image.get_rect(
-                center=(
-                    result_box.centerx,
-                    result_box.y + 120 + i * 40
-                )
-            )
-            screen.blit(line_image, line_rect)
-
-    pygame.display.flip()
-    clock.tick(60)
-
-pygame.quit()
+            pygame.draw.rect(
+                screen, (255, 80, 80),
+                message_box, 3, border_radius=12
+            )  # วาดขอบสีแดง
 
             message_text = font.render(
                 hint_message, True, (255, 255, 255)
