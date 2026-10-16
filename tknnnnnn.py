@@ -44,6 +44,7 @@ restart_rect = pygame.Rect(300, 55, 160, 50)  # ปุ่มเริ่มเ�
 hint_rect = pygame.Rect(30, 920, 120, 50)  # ปุ่มคำใบ้
 stock_rect = pygame.Rect(40, 15, 100, 140)  # กองไพ่สำรอง
 play_again_rect = pygame.Rect(390, 590, 220, 55)  # ปุ่มเล่นอีกครั้ง
+play_rect = pygame.Rect(390, 480, 220, 65)  # ปุ่ม Play หน้า Title
 
 # ==================== ตัวแปรของเกม ====================
 
@@ -435,9 +436,32 @@ def draw_game_result():  # แสดงผลหลังชนะหรือ�
         play_again_rect, "Play Again", (255, 210, 70)
     )  # วาดปุ่มเล่นอีกครั้ง
 
+def draw_title_screen():
+    screen.fill((30, 100, 60))
+
+    title_surface = win_font.render(
+        "SCORPION", True, (255, 215, 70)
+    )
+    screen.blit(
+        title_surface,
+        title_surface.get_rect(center=(WIDTH // 2, 300))
+    )
+
+    subtitle_surface = font.render(
+        "SOLITAIRE", True, (255, 255, 255)
+    )
+    screen.blit(
+        subtitle_surface,
+        subtitle_surface.get_rect(center=(WIDTH // 2, 365))
+    )
+
+    draw_button(
+        play_rect, "Play", (255, 210, 70)
+    )
+
 # ==================== เริ่มเกมครั้งแรก ====================
 
-restart_game()  # สร้างและแจกไพ่เริ่มต้น
+show_title = True  # เปิดหน้า Title ก่อนเริ่มเกม
 
 # ==================== MAIN LOOP ====================
 
@@ -449,10 +473,19 @@ while running:  # วนลูปหลักของเกม
 
     for event in pygame.event.get():  # รับเหตุการณ์จากผู้เล่น
 
-        if event.type == pygame.QUIT:  # หากกดปิดหน้าต่าง
-            running = False  # หยุดเกม
+        if event.type == pygame.QUIT:
+            running = False
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:  # หากกดปุ่มเมาส์
+        elif show_title:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if play_rect.collidepoint(event.pos):
+                        restart_game()
+                        show_title = False
+
+            continue
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
 
             if event.button != 1:  # หากไม่ใช่คลิกซ้าย
                 continue  # ข้ามเหตุการณ์
@@ -602,6 +635,12 @@ while running:  # วนลูปหลักของเกม
                 dragging = False  # หยุดลากไพ่
                 selected_pile = None  # ล้างกองที่เลือก
                 selected_index = None  # ล้างตำแหน่งไพ่
+
+    if show_title:
+        draw_title_screen()
+        pygame.display.flip()
+        clock.tick(60)
+        continue
 
     # ==================== ตรวจสถานะเกม ====================
 
