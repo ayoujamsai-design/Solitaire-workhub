@@ -45,6 +45,8 @@ hint_rect = pygame.Rect(30, 920, 120, 50)  # ปุ่มคำใบ้
 stock_rect = pygame.Rect(40, 15, 100, 140)  # กองไพ่สำรอง
 play_again_rect = pygame.Rect(390, 590, 220, 55)  # ปุ่มเล่นอีกครั้ง
 play_rect = pygame.Rect(390, 480, 220, 65)  # ปุ่ม Play หน้า Title
+pause_rect = pygame.Rect(170, 920, 120, 50) # ปุ่ม pause/หยุดเกมชั่วคราว
+resume_rect = pygame.Rect(390, 500, 220, 60) # ปุ่ม resume หลังจากกด pause
 
 # ==================== ตัวแปรของเกม ====================
 
@@ -66,6 +68,9 @@ score = 10000  # คะแนนเริ่มต้น
 
 game_won = False  # สถานะชนะเกม
 game_over = False  # สถานะแพ้เกม
+
+paused = False  # สถานะพักเกม
+pause_start_ticks = 0  # เวลาที่เริ่มกดพัก
 
 hint_move = None  # เก็บตำแหน่งไพ่ที่ระบบแนะนำ
 hint_start_time = 0  # เวลาเริ่มแสดงคำใบ้
@@ -291,6 +296,7 @@ def restart_game():  # เริ่มเกมใหม่และรีเซ
     global hint_move, hint_message  # อ้างอิงข้อมูลคำใบ้
     global hint_start_time, hint_message_time  # อ้างอิงเวลาคำใบ้
     global offset_x, offset_y  # อ้างอิงระยะเมาส์กับไพ่
+    global paused, pause_start_ticks
 
     new_deck = []  # สร้างสำรับไพ่ใหม่
 
@@ -336,6 +342,8 @@ def restart_game():  # เริ่มเกมใหม่และรีเซ
     hint_message = ""  # ล้างข้อความคำใบ้
     hint_start_time = 0  # รีเซ็ตเวลาคำใบ้
     hint_message_time = 0  # รีเซ็ตเวลาแจ้งเตือน
+    paused = False
+    pause_start_ticks = 0
 
 # ==================== ฟังก์ชันวาดปุ่ม ====================
 
@@ -459,6 +467,54 @@ def draw_title_screen():
         play_rect, "Play", (255, 210, 70)
     )
 
+def toggle_pause():
+    global paused, pause_start_ticks, start_ticks
+    global dragging, selected_pile, selected_index
+    global hint_move, hint_message
+
+    if paused:
+        # เลื่อนเวลาเริ่มต้น เพื่อไม่นับเวลาที่พัก
+        start_ticks += pygame.time.get_ticks() - pause_start_ticks
+        paused = False
+    else:
+        pause_start_ticks = pygame.time.get_ticks()
+        paused = True
+
+        # ยกเลิกการลาก โดยไพ่ยังอยู่กองเดิม
+        dragging = False
+        selected_pile = None
+        selected_index = None
+
+        hint_move = None
+        hint_message = ""
+
+
+def draw_pause_screen():
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    screen.blit(overlay, (0, 0))
+
+    pause_box = pygame.Rect(250, 320, 500, 320)
+
+    pygame.draw.rect(
+        screen, (30, 45, 40), pause_box, border_radius=18
+    )
+    pygame.draw.rect(
+        screen, (255, 215, 70), pause_box, 3, border_radius=18
+    )
+
+    title_surface = win_font.render(
+        "PAUSED", True, (255, 215, 70)
+    )
+    screen.blit(
+        title_surface,
+        title_surface.get_rect(center=(WIDTH // 2, 410))
+    )
+
+    draw_button(
+        resume_rect, "Resume", (255, 210, 70)
+    )
+
 # ==================== เริ่มเกมครั้งแรก ====================
 
 show_title = True  # เปิดหน้า Title ก่อนเริ่มเกม
@@ -485,6 +541,19 @@ while running:  # วนลูปหลักของเกม
 
             continue
 
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                if not game_won and not game_over:
+                    toggle_pause()
+
+        elif paused:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if resume_rect.collidepoint(event.pos):
+                        toggle_pause()
+
+            continue
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
 
             if event.button != 1:  # หากไม่ใช่คลิกซ้าย
@@ -500,6 +569,10 @@ while running:  # วนลูปหลักของเกม
                     restart_game()  # เริ่มเกมใหม่
 
                 continue  # ไม่รับการคลิกส่วนอื่น
+
+            if pause_rect.collidepoint(mouse_x, mouse_y):
+                toggle_pause()
+                continue
 
             if restart_rect.collidepoint(mouse_x, mouse_y):
                 restart_game()  # เริ่มเกมใหม่เมื่อกด Restart
@@ -644,10 +717,10 @@ while running:  # วนลูปหลักของเกม
 
     # ==================== ตรวจสถานะเกม ====================
 
-    if not dragging and not game_won and not game_over:
+    if not paused and not dragging and not game_won and not game_over:
         collect_completed_sets()  # ตรวจชุดไพ่สำเร็จ
 
-    if not game_won and not game_over:  # หากเกมยังดำเนินอยู่
+    if not paused and not game_won and not game_over:
 
         elapsed_seconds = (
             pygame.time.get_ticks() - start_ticks
@@ -682,7 +755,11 @@ while running:  # วนลูปหลักของเกม
 
     draw_button(
         hint_rect, "Hint", (255, 210, 70)
-    )  # วาดปุ่ม Hint
+    )  # วาดปุ่ม 
+
+    draw_button(
+        pause_rect, "Pause", (240, 240, 240)
+    )  # วาดปุ่ม Pause
 
     minutes = elapsed_seconds // 60  # คำนวณนาที
     seconds = elapsed_seconds % 60  # คำนวณวินาที
@@ -895,6 +972,9 @@ while running:  # วนลูปหลักของเกม
 
     if game_over or game_won:  # หากเกมชนะหรือแพ้
         draw_game_result()  # แสดงคะแนน เวลา และจำนวนครั้งที่ย้าย
+
+    if paused:
+        draw_pause_screen()
 
     pygame.display.flip()  # อัปเดตหน้าจอเกม
     clock.tick(60)  # จำกัดความเร็วที่ 60 FPS
