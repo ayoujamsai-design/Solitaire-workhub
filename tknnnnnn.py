@@ -65,6 +65,7 @@ move_count = 0  # จำนวนครั้งที่ย้ายหรื�
 start_ticks = pygame.time.get_ticks()  # เวลาเริ่มต้นเกม
 elapsed_seconds = 0  # เวลาที่เล่นไปแล้ว
 score = 10000  # คะแนนเริ่มต้น
+hint_penalty = 0  # คะแนนสะสมที่หักจากการใช้ Hint
 
 game_won = False  # สถานะชนะเกม
 game_over = False  # สถานะแพ้เกม
@@ -297,6 +298,7 @@ def restart_game():  # เริ่มเกมใหม่และรีเซ
     global hint_start_time, hint_message_time  # อ้างอิงเวลาคำใบ้
     global offset_x, offset_y  # อ้างอิงระยะเมาส์กับไพ่
     global paused, pause_start_ticks
+    global hint_penalty
 
     new_deck = []  # สร้างสำรับไพ่ใหม่
 
@@ -344,6 +346,7 @@ def restart_game():  # เริ่มเกมใหม่และรีเซ
     hint_message_time = 0  # รีเซ็ตเวลาแจ้งเตือน
     paused = False
     pause_start_ticks = 0
+    hint_penalty = 0
 
 # ==================== ฟังก์ชันวาดปุ่ม ====================
 
@@ -590,6 +593,7 @@ while running:  # วนลูปหลักของเกม
 
             if hint_rect.collidepoint(mouse_x, mouse_y):
 
+                hint_penalty += 100  # ลดคะแนนเมื่อกดคำใบ้
                 hint_move = find_hint()  # ค้นหาการย้ายไพ่
                 hint_start_time = pygame.time.get_ticks()  # เริ่มจับเวลาคำใบ้
 
@@ -728,8 +732,8 @@ while running:  # วนลูปหลักของเกม
 
         score = max(
             0,
-            10000 - elapsed_seconds * 2 - move_count * 20
-        )  # คำนวณคะแนนตามเวลาและจำนวนครั้งที่ย้าย
+            10000 - elapsed_seconds * 2 - move_count * 20 - hint_penalty
+        )  # หักคะแนนตามเวลา จำนวนครั้งที่ย้าย และการใช้ Hint
 
         if len(completed_sets) == 4:  # หากเรียงครบสี่ชุด
             game_won = True  # ชนะเกม
