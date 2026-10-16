@@ -5,12 +5,23 @@ from pathlib import Path #นำเข้าpath
 pygame.init()
 
 screen = pygame.display.set_mode((1000, 1000))
-pygame.display.set_caption("Solitaire")
+pygame.display.set_caption("Scorpion Solitaire")
 
 font = pygame.font.Font(None, 30)
 status_font = pygame.font.Font(None, 24)
-win_font = pygame.font.Font(None, 100)
+win_font = pygame.font.Font(None, 80)
 clock = pygame.time.Clock()
+
+
+def get_card_spacing(card_count):
+    available_height = screen.get_height() - 180 - 140 - 20
+    if card_count <= 1:
+        return 45
+    return min(45, available_height / (card_count - 1))
+
+
+def get_card_y(pile_index, card_index):
+    return int(180 + card_index * get_card_spacing(len(piles[pile_index])))
 
 suits = ["S", "H", "D", "C"]
 ranks = ["A", "2", "3", "4", "5", "6", "7",
@@ -98,6 +109,7 @@ def can_place(card, destination):
 
 # ตำแหน่งปุ่ม Hint
 hint_rect = pygame.Rect(30, 920, 120, 50)
+play_again_rect = pygame.Rect(390, 590, 220, 55)
 
 # เก็บตำแหน่งไพ่ที่ระบบแนะนำ
 hint_move = None
@@ -188,15 +200,62 @@ offset_x = 0
 offset_y = 0
 
 
+def check_game_over():
+    return (
+        len(extra_cards) == 0
+        and len(completed_sets) != 4
+        and find_hint() is None
+    )
+
+
+def draw_game_result():
+    overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    screen.blit(overlay, (0, 0))
+
+    result_box = pygame.Rect(250, 290, 500, 390)
+    pygame.draw.rect(screen, (30, 45, 40), result_box, border_radius=18)
+
+    if game_won:
+        border_color = (255, 215, 70)
+        result_title = "YOU WIN!"
+    else:
+        border_color = (255, 80, 80)
+        result_title = "GAME OVER"
+
+    pygame.draw.rect(screen, border_color, result_box, 4, border_radius=18)
+    title_surface = win_font.render(result_title, True, border_color)
+    screen.blit(title_surface, title_surface.get_rect(center=(500, 350)))
+
+    score_text = font.render(f"Final Score: {score}", True, (255, 255, 255))
+    screen.blit(score_text, score_text.get_rect(center=(500, 430)))
+    minutes = elapsed_seconds // 60
+    seconds = elapsed_seconds % 60
+    time_text = font.render(f"Time: {minutes:02d}:{seconds:02d}", True, (255, 255, 255))
+    screen.blit(time_text, time_text.get_rect(center=(500, 475)))
+    moves_text = font.render(f"Moves: {move_count}", True, (255, 255, 255))
+    screen.blit(moves_text, moves_text.get_rect(center=(500, 520)))
+
+    pygame.draw.rect(screen, (255, 210, 70), play_again_rect, border_radius=10)
+    pygame.draw.rect(screen, (0, 0, 0), play_again_rect, 2, border_radius=10)
+    play_text = font.render("Play Again", True, (0, 0, 0))
+    screen.blit(play_text, play_text.get_rect(center=play_again_rect.center))
+
+
 def restart_game():
     global piles, extra_cards
     global selected_pile, selected_index, dragging
     global move_count
-    global start_ticks, elapsed_seconds, game_won, score
-    global hint_move, hint_message
+    global start_ticks, elapsed_seconds, game_won, game_over, score
+    global hint_move, hint_message, hint_start_time, hint_message_time
+    global offset_x, offset_y
 
     hint_move = None
     hint_message = ""
+    hint_start_time = 0
+    hint_message_time = 0
+    offset_x = 0
+    offset_y = 0
     
     
 
@@ -236,6 +295,7 @@ def restart_game():
     start_ticks = pygame.time.get_ticks()
     elapsed_seconds = 0
     game_won = False
+    game_over = False
     score = 10000
 
 restart_rect = pygame.Rect(300, 55, 160, 50) # ตำแหน่งปุ่มรีสตาร์ท
@@ -288,6 +348,7 @@ move_count = 0
 start_ticks = pygame.time.get_ticks()
 elapsed_seconds = 0
 game_won = False
+game_over = False
 score = 10000
 
 running = True
@@ -305,7 +366,11 @@ while running:
                 dragging = False
 
                 mouse_x, mouse_y = event.pos
-                
+
+                if game_over or game_won:
+                    if play_again_rect.collidepoint(mouse_x, mouse_y):
+                        restart_game()
+                    continue
 
                 # ถ้าคลิกที่อื่นนอกจากปุ่ม Hint ให้ปิดคำใบ้
                 if not hint_rect.collidepoint(mouse_x, mouse_y):
@@ -320,13 +385,17 @@ while running:
                 
                 if hint_rect.collidepoint(mouse_x, mouse_y):
                     hint_move = find_hint()
+                    hint_start_time = pygame.time.get_ticks()
 
                     if hint_move is None:
-                        hint_message = "NO AVAILABLE MOVES"
-                        hint_message_time = pygame.time.get_ticks()
+                        if len(extra_cards) == 0:
+                            game_over = True
+                            hint_message = ""
+                        else:
+                            hint_message = "NO MOVES - TRY STOCK"
+                            hint_message_time = pygame.time.get_ticks()
                     else:
                         hint_message = ""
-                        hint_start_time = pygame.time.get_ticks()
 
                     continue
 
@@ -356,12 +425,12 @@ while running:
                     x = 40 + i * 135
 
                     for j in range(len(pile) - 1, -1, -1):
-                        y = 180 + j * 45
+                        y = get_card_y(i, j)
 
                         if j == len(pile) - 1:
                             height = 140
                         else:
-                            height = 45
+                            height = max(1, get_card_y(i, j + 1) - y)
 
                         card_rect = pygame.Rect(x, y, 100, height)
 
@@ -411,11 +480,11 @@ while running:
                 selected_index = None
 
     # ตรวจชุดที่สำเร็จเมื่อไม่ได้ลากไพ่
-    if not dragging:
+    if not dragging and not game_won and not game_over:
         collect_completed_sets()
 
     # อัปเดตเวลาและคะแนนจนกว่าจะชนะ
-    if not game_won:
+    if not game_won and not game_over:
         elapsed_seconds = (
             pygame.time.get_ticks() - start_ticks
         ) // 1000
@@ -427,13 +496,15 @@ while running:
 
         if len(completed_sets) == 4:
             game_won = True
-            
-        # ปิดคำใบ้อัตโนมัติหลัง 1.5 วินาที
-        if hint_move is not None:
-            current_time = pygame.time.get_ticks()
+        elif check_game_over():
+            game_over = True
 
-            if current_time - hint_start_time >= hint_duration:
-                hint_move = None
+    # ปิดคำใบ้อัตโนมัติหลัง 1.5 วินาที
+    if hint_move is not None:
+        current_time = pygame.time.get_ticks()
+
+        if current_time - hint_start_time >= hint_duration:
+            hint_move = None
     # ล้างภาพเก่าทุกเฟรม
     screen.fill((30, 100, 60))
 
@@ -523,7 +594,7 @@ while running:
             card = pile[j]
 
             x = 40 + i * 135
-            y = 180 + j * 45
+            y = get_card_y(i, j)
             rect = pygame.Rect(x, y, 100, 140)
 
             if card[2]:
@@ -540,7 +611,7 @@ while running:
 
         # ไพ่ต้นทาง (สีเหลือง)
         source_x = 40 + source_i * 135
-        source_y = 180 + card_j * 45
+        source_y = get_card_y(source_i, card_j)
 
         pygame.draw.rect(
             screen, (255, 255, 0),
@@ -551,7 +622,7 @@ while running:
         dest_x = 40 + dest_i * 135
 
         if len(piles[dest_i]) > 0:
-            dest_y = 180 + (len(piles[dest_i]) - 1) * 45
+            dest_y = get_card_y(dest_i, len(piles[dest_i]) - 1)
         else:
             dest_y = 180
 
@@ -586,12 +657,15 @@ while running:
     if dragging:
         mouse_x, mouse_y = pygame.mouse.get_pos()
         moving_cards = piles[selected_pile][selected_index:]
+        drag_spacing = get_card_spacing(len(moving_cards))
+        group_height = (len(moving_cards) - 1) * drag_spacing + 140
+        drag_y = max(0, min(mouse_y - offset_y, screen.get_height() - group_height))
 
         for j in range(len(moving_cards)):
             card = moving_cards[j]
 
             x = mouse_x - offset_x
-            y = mouse_y - offset_y + j * 45
+            y = int(drag_y + j * drag_spacing)
             rect = pygame.Rect(x, y, 100, 140)
 
             image = card_images[(card[0], card[1])]
@@ -601,57 +675,40 @@ while running:
                 screen, (255, 220, 0), rect, 3
             )
 
-    # ตรวจชนะ
-    if len(completed_sets) == 4:
-        win_box = pygame.Rect(0, 0, 460, 150)
-        win_box.center = screen.get_rect().center
+    # แสดงข้อความเมื่อไม่มีการย้ายที่เป็นไปได้
+    if hint_message != "":
 
-        pygame.draw.rect(
-            screen, (20, 75, 45), win_box, border_radius=15
-        )
-        pygame.draw.rect(
-            screen, (255, 220, 0), win_box, 3, border_radius=15
-        )
+        current_time = pygame.time.get_ticks()
 
-        win_text = win_font.render(
-            "YOU WIN!", True, (255, 255, 255)
-        )
-        text_rect = win_text.get_rect(center=win_box.center)
-        screen.blit(win_text, text_rect)
-        
-        
-                
-        # แสดงข้อความเมื่อไม่มีการย้ายที่เป็นไปได้
-        if hint_message != "":
+        # แสดงข้อความ 2 วินาที
+        if current_time - hint_message_time < 2000:
 
-            current_time = pygame.time.get_ticks()
+            message_box = pygame.Rect(250, 400, 500, 150)
 
-            # แสดงข้อความ 2 วินาที
-            if current_time - hint_message_time < 2000:
+            pygame.draw.rect(
+                screen, (30, 40, 40),
+                message_box, border_radius=12
+            )
 
-                message_box = pygame.Rect(250, 400, 500, 150)
+            pygame.draw.rect(
+                screen, (255, 80, 80),
+                message_box, 3, border_radius=12
+            )
 
-                pygame.draw.rect(
-                    screen, (30, 40, 40),
-                    message_box, border_radius=12
-                )
+            message_text = font.render(
+                hint_message, True, (255, 255, 255)
+            )
 
-                pygame.draw.rect(
-                    screen, (255, 80, 80),
-                    message_box, 3, border_radius=12
-                )
+            screen.blit(
+                message_text,
+                message_text.get_rect(center=message_box.center)
+            )
 
-                message_text = font.render(
-                    hint_message, True, (255, 255, 255)
-                )
+        else:
+            hint_message = ""
 
-                screen.blit(
-                    message_text,
-                    message_text.get_rect(center=message_box.center)
-                )
-
-            else:
-                hint_message = ""
+    if game_over or game_won:
+        draw_game_result()
 
 
     pygame.display.flip()
